@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#080f1c">
+  <meta name="color-scheme" content="dark">
+  <meta name="description" content="15 Fragen in drei Runden. Ein Joker, drei Chancen und eine detaillierte Auswertung.">
+  <title>Quizlab - Das Wissensquiz</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="questions.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <div class="page-glow page-glow--left" aria-hidden="true"></div>
+  <div class="page-glow page-glow--right" aria-hidden="true"></div>
+  <div class="site-shell">
+    <header class="site-header">
+      <a class="brand" href="index.html" aria-label="Quizlab - Startseite">
+        <span class="brand-symbol" aria-hidden="true">Q<span>.</span></span>
+        <span class="brand-text">QUIZ<span>LAB</span><small>WISSEN AUF ZEIT</small></span>
+      </a>
+      <div class="header-actions">
+        <div id="save-status" class="save-status" aria-live="off">
+          <span class="status-dot" aria-hidden="true"></span>
+          <span class="save-status-label">Lokal gespeichert</span>
+        </div>
+        <button id="reset-button" class="button button--ghost button--small" type="button" hidden>Neues Spiel</button>
+      </div>
+    </header>
+    <main id="app" class="app-content">
+      <section class="loading"><h1>Quiz wird geladen ...</h1></section>
+      <noscript><p>Bitte aktiviere JavaScript, um das Quiz zu spielen.</p></noscript>
+    </main>
+    <footer class="site-footer">
+      <span>15 FRAGEN <span class="footer-separator">/</span> 3 RUNDEN <span class="footer-separator">/</span> 1 JOKER</span>
+      <span>Ohne Anmeldung &middot; funktioniert offline</span>
+    </footer>
+  </div>
+</body>
+</html>
