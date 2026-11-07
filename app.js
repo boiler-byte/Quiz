@@ -16,6 +16,7 @@
   const app = document.getElementById("app");
   const resetButton = document.getElementById("reset-button");
   const saveStatus = document.getElementById("save-status");
+  const restoreToast = document.getElementById("restore-toast");
   const questions = Array.isArray(window.QUIZ_QUESTIONS) ? window.QUIZ_QUESTIONS : [];
   const questionMap = new Map(questions.map((question) => [question.id, question]));
   const allCategoryNames = [...new Set(questions.map((question) => question.category))].sort((a, b) => a.localeCompare(b, "de"));
@@ -25,7 +26,6 @@
 
   let selectedCategory = ALL_CATEGORIES;
   let game = null;
-  let restored = false;
   let clockAnchor = null;
   let lastSavedSecond = -1;
   let storageAvailable = true;
@@ -149,6 +149,12 @@
     try { localStorage.removeItem(STORAGE_KEY); } catch (error) { /* Browser blockiert Speicher. */ }
   }
 
+  function showRestoreToast() {
+    restoreToast.textContent = "Dein gespeicherter Spielstand wurde wieder hergestellt";
+    restoreToast.hidden = false;
+    window.setTimeout(() => { restoreToast.hidden = true; }, 3500);
+  }
+
   // Nur die aktive Zeit bei einer angezeigten Frage wird gezählt.
   // Während einer Rundenpause, nach einer Antwort und bei verborgenem Tab pausiert die Uhr.
   function syncClock() {
@@ -236,11 +242,11 @@
       answers: [],
       endReason: null
     };
-    restored = false;
     clockAnchor = null;
     lastSavedSecond = -1;
     saveGame();
     render();
+    window.scrollTo({ top: 0, behavior: "instant" });
     resumeClock();
   }
 
@@ -255,15 +261,27 @@
       <div class="game-header">
         <div class="game-header-top">
           <div class="game-heading">
-            <h2>Runde ${roundIndex + 1} <span class="blue-text">/ ${html(ROUNDS[roundIndex].label)}</span></h2>
+            <div class="game-heading-title-row">
+              <h2>Runde ${roundIndex + 1} <span class="blue-text">/ ${html(ROUNDS[roundIndex].label)}</span></h2>
+              <button type="button" class="button button--ghost button--small game-heading-reset" data-action="restart">Neues Spiel</button>
+            </div>
             <span class="subheading">${html(game.category)} &middot; Frage ${game.index + 1} von ${TOTAL_QUESTIONS}</span>
+            <div class="progress-rail" role="progressbar" aria-label="Beantwortete Fragen" aria-valuemin="0" aria-valuemax="${TOTAL_QUESTIONS}" aria-valuenow="${game.answers.length}">
+              <div class="progress-fill" style="width:${100 * game.answers.length / TOTAL_QUESTIONS}%"></div>
+            </div>
           </div>
           <div class="game-meta">
             <div class="meta-stat"><small>Zeit</small><strong id="live-timer">${formatTime(game.elapsedMs)}</strong></div>
-            <div class="meta-stat" aria-label="Noch ${remaining} Fehlversuche">
-              <small>Chancen</small><span class="life-dots" aria-hidden="true">
-                ${Array.from({ length: MAX_MISTAKES }, (_, index) => `<span class="life-dot ${index >= remaining ? "is-empty" : ""}"></span>`).join("")}
-              </span><strong>${remaining}/${MAX_MISTAKES}</strong>
+            <div class="game-meta-actions">
+              <div class="meta-stat meta-stat--chances" aria-label="Noch ${remaining} Fehlversuche">
+                <small>Chancen</small><span class="life-dots" aria-hidden="true">
+                  ${Array.from({ length: MAX_MISTAKES }, (_, index) => `<span class="life-dot ${index >= remaining ? "is-empty" : ""}"></span>`).join("")}
+                </span><strong class="chance-count">${remaining}/${MAX_MISTAKES}</strong>
+              </div>
+              <button type="button" class="joker-button" data-action="joker" ${game.joker.used || game.phase !== "question" ? "disabled" : ""}
+                aria-label="50:50-Joker ${game.joker.used ? "bereits verwendet" : "einsetzen"}">
+                <span class="joker-icon">50:50</span><span>Joker</span>
+              </button>
             </div>
           </div>
         </div>
@@ -275,10 +293,6 @@
               <span class="round-tab-copy"><small>Runde 0${index + 1}</small><strong>${html(round.label)}</strong></span>
             </div>`;
           }).join("")}
-        </div>
-        <div class="progress-row"><span>Gesamtfortschritt</span><strong>${game.answers.length} / ${TOTAL_QUESTIONS}</strong></div>
-        <div class="progress-rail" role="progressbar" aria-label="Beantwortete Fragen" aria-valuemin="0" aria-valuemax="15" aria-valuenow="${game.answers.length}">
-          <div class="progress-fill" style="width:${100 * game.answers.length / TOTAL_QUESTIONS}%"></div>
         </div>
       </div>
     `;
@@ -321,7 +335,6 @@
     }
 
     return `<div class="game-container">
-      ${restored ? '<div class="resume-note" role="status">Dein gespeicherter Spielstand wurde wiederhergestellt.</div>' : ""}
       ${gameHeader()}
       <section class="question-card" aria-labelledby="question-heading">
         <div class="question-tagline">
@@ -335,10 +348,6 @@
         </div>
         ${feedback}
         <div class="question-actions">
-          <button type="button" class="joker-button" data-action="joker" ${game.joker.used || locked ? "disabled" : ""}
-            aria-label="50:50-Joker ${game.joker.used ? "bereits verwendet" : "einsetzen"}">
-            <span class="joker-icon">50:50</span><span>${game.joker.used ? "Joker verbraucht" : "Joker einsetzen"}</span>
-          </button>
           ${locked
             ? '<button type="button" class="button button--primary" data-action="next">Weiter <span class="button-arrow" aria-hidden="true">&rarr;</span></button>'
             : '<p class="keyboard-hint">Tasten 1-4: Antwort &middot; J: Joker</p>'}
@@ -351,7 +360,6 @@
     const roundIndex = Math.floor(game.index / QUESTIONS_PER_ROUND);
     const round = ROUNDS[roundIndex];
     return `<section class="round-intro-card" aria-labelledby="round-heading">
-      ${restored ? '<div class="resume-note">Dein gespeicherter Spielstand wurde wiederhergestellt.</div>' : ""}
       <span class="eyebrow">Runde ${roundIndex + 1} von 3 &middot; ${html(round.label)}</span>
       <h1 id="round-heading" tabindex="-1">${html(round.title)}<br><span class="blue-text">Weiter geht's.</span></h1>
       <p>${html(round.description)} Die Uhr startet erst, wenn du die n&auml;chste Runde beginnst.</p>
@@ -465,7 +473,6 @@
     } else {
       game.phase = "feedback";
     }
-    restored = false;
     saveGame();
     render();
     if (game.phase === "feedback") document.getElementById("feedback-panel")?.focus({ preventScroll: false });
@@ -482,7 +489,6 @@
       questionId: q.id,
       hiddenIndices: shuffle(wrongIndices).slice(0, 2)
     };
-    restored = false;
     saveGame();
     render();
     document.getElementById("question-heading")?.focus({ preventScroll: true });
@@ -493,7 +499,6 @@
     game.index += 1;
     game.questionElapsedMs = 0;
     game.phase = game.index % QUESTIONS_PER_ROUND === 0 ? "roundIntro" : "question";
-    restored = false;
     saveGame();
     render();
     resumeClock();
@@ -504,7 +509,6 @@
     if (!game || game.phase !== "roundIntro") return;
     game.phase = "question";
     game.questionElapsedMs = 0;
-    restored = false;
     saveGame();
     render();
     resumeClock();
@@ -517,7 +521,6 @@
     if (game) selectedCategory = game.category;
     clockAnchor = null;
     game = null;
-    restored = false;
     clearSavedGame();
     render();
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -583,9 +586,10 @@
     return;
   }
   game = loadGame();
-  restored = Boolean(game && game.phase !== "finished");
+  const restoredGame = Boolean(game && game.phase !== "finished");
   if (game) selectedCategory = game.category;
   updateSaveStatus();
   render();
+  if (restoredGame) showRestoreToast();
   resumeClock();
 })();
