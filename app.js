@@ -54,6 +54,15 @@
     return result;
   }
 
+  // Speichert für jede Frage die Bildschirmpositionen als Indizes der Originalantworten.
+  function createAnswerOrders(questionIds) {
+    return Object.fromEntries(questionIds.map((id) => [id, shuffle([0, 1, 2, 3])]));
+  }
+
+  function answerOrder(q) {
+    return game.answerOrders[q.id];
+  }
+
   function validateCatalog() {
     if (!questions.length) return "Die Datei questions.js konnte nicht geladen werden oder enthält keine Fragen.";
     if (new Set(questions.map((q) => q.id)).size !== questions.length) return "Im Fragenkatalog wurden doppelte IDs gefunden.";
@@ -90,6 +99,13 @@
       if (!q || q.difficulty !== ROUNDS[Math.floor(i / QUESTIONS_PER_ROUND)].difficulty ||
           (value.category !== ALL_CATEGORIES && q.category !== value.category)) return false;
     }
+    if (value.answerOrders !== undefined && (
+        !value.answerOrders || typeof value.answerOrders !== "object" ||
+        value.questionIds.some((id) => !Array.isArray(value.answerOrders[id]) ||
+          value.answerOrders[id].length !== 4 ||
+          new Set(value.answerOrders[id]).size !== 4 ||
+          value.answerOrders[id].some((n) => !Number.isInteger(n) || n < 0 || n > 3)))) return false;
+
     if (value.answers.length > TOTAL_QUESTIONS ||
         value.answers.some((answer, index) => {
           const q = questionMap.get(value.questionIds[index]);
@@ -233,6 +249,7 @@
       version: STORAGE_VERSION,
       category: selectedCategory,
       questionIds,
+      answerOrders: createAnswerOrders(questionIds),
       index: 0,
       phase: "question",
       mistakes: 0,
@@ -305,13 +322,14 @@
     const hiddenIndices = game.joker.used && game.joker.questionId === q.id ? game.joker.hiddenIndices : [];
     const letters = ["A", "B", "C", "D"];
 
-    const answersMarkup = q.answers.map((option, index) => {
-      const removed = hiddenIndices.includes(index);
+    const answersMarkup = answerOrder(q).map((originalIndex, index) => {
+      const option = q.answers[originalIndex];
+      const removed = hiddenIndices.includes(originalIndex);
       let stateClass = "";
       let mark = "";
       if (removed) stateClass = "is-removed";
-      else if (locked && index === q.correctIndex) { stateClass = "is-correct"; mark = "&#10003;"; }
-      else if (locked && index === answer.selectedIndex) { stateClass = "is-wrong"; mark = "&#10005;"; }
+      else if (locked && originalIndex === q.correctIndex) { stateClass = "is-correct"; mark = "&#10003;"; }
+      else if (locked && originalIndex === answer.selectedIndex) { stateClass = "is-wrong"; mark = "&#10005;"; }
       else if (locked) stateClass = "is-neutral";
 
       return `<button type="button" class="answer ${stateClass}" data-action="answer" data-index="${index}"
@@ -449,14 +467,15 @@
   function answerQuestion(index) {
     if (!game || game.phase !== "question" || !Number.isInteger(index) || index < 0 || index > 3) return;
     const q = currentQuestion();
-    if (game.joker.used && game.joker.questionId === q.id && game.joker.hiddenIndices.includes(index)) return;
+    const originalIndex = answerOrder(q)[index];
+    if (game.joker.used && game.joker.questionId === q.id && game.joker.hiddenIndices.includes(originalIndex)) return;
 
     syncClock();
     clockAnchor = null;
-    const correct = index === q.correctIndex;
+    const correct = originalIndex === q.correctIndex;
     game.answers.push({
       id: q.id,
-      selectedIndex: index,
+      selectedIndex: originalIndex,
       correct,
       elapsedMs: Math.round(game.questionElapsedMs),
       usedJoker: game.joker.used && game.joker.questionId === q.id
@@ -586,6 +605,14 @@
     return;
   }
   game = loadGame();
+  if (game && !game.answerOrders) {
+    // Alte Speicherstände beibehalten: bereits beantwortete Fragen nicht umsortieren.
+    const answeredIds = new Set(game.answers.map((answer) => answer.id));
+    game.answerOrders = Object.fromEntries(game.questionIds.map((id) => [
+      id, answeredIds.has(id) ? [0, 1, 2, 3] : shuffle([0, 1, 2, 3])
+    ]));
+    saveGame();
+  }
   const restoredGame = Boolean(game && game.phase !== "finished");
   if (game) selectedCategory = game.category;
   updateSaveStatus();
