@@ -7,6 +7,11 @@
   <meta name="color-scheme" content="dark">
   <meta name="description" content="15 Fragen in drei Runden. Ein Joker, drei Chancen und eine detaillierte Auswertung.">
   <title>Quizlab - Das Wissensquiz</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="stylesheet" href="styles.css">
   <script src="questions.js" defer></script>
   <script src="app.js" defer></script>
@@ -21,6 +26,7 @@
         <span class="brand-text">QUIZ<span>LAB</span><small>WISSEN AUF ZEIT</small></span>
       </a>
       <div class="header-actions">
+        <button id="install-button" class="button button--ghost button--small" type="button" hidden>App installieren</button>
         <div id="save-status" class="save-status" aria-live="off">
           <span class="status-dot" aria-hidden="true"></span>
           <span class="save-status-label">Lokal gespeichert</span>

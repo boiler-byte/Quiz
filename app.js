@@ -3,6 +3,13 @@
 
   const STORAGE_KEY = "quizlab-spielstand-v1";
   const STORAGE_VERSION = 1;
+  const HISTORY_KEY = "quizlab-fragenverlauf-v2";
+  const HISTORY_VERSION = 2;
+  // Maximal 35 zuletzt beantwortete Fragen je Kategorie/Stufe sperren;
+  // im Kategorienmix 100 je Stufe (sofern ausreichend neue Fragen vorhanden sind).
+  const CATEGORY_COOLDOWN = 35;
+  const MIXED_COOLDOWN = 100;
+  const HISTORY_MAX_PER_LEVEL = 750;
   const QUESTIONS_PER_ROUND = 5;
   const TOTAL_QUESTIONS = 15;
   const MAX_MISTAKES = 3;
@@ -61,6 +68,63 @@
 
   function answerOrder(q) {
     return game.answerOrders[q.id];
+  }
+
+  // Unabhängig vom Spielstand: Der Verlauf bleibt auch nach "Neues Spiel" erhalten.
+  function loadHistory() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(HISTORY_KEY) || "null");
+      if (saved?.version !== HISTORY_VERSION || !saved.levels) return emptyHistory();
+      const levels = {};
+      for (const round of ROUNDS) {
+        const entries = saved.levels[round.difficulty];
+        levels[round.difficulty] = Array.isArray(entries)
+          ? entries.filter((id) => typeof id === "string" &&
+              questionMap.get(id)?.difficulty === round.difficulty).slice(-HISTORY_MAX_PER_LEVEL)
+          : [];
+      }
+      return { version: HISTORY_VERSION, levels };
+    } catch (error) { return emptyHistory(); }
+  }
+
+  function emptyHistory() {
+    return { version: HISTORY_VERSION, levels: Object.fromEntries(ROUNDS.map((r) => [r.difficulty, []])) };
+  }
+
+  let questionHistory = loadHistory();
+
+  function rememberAnsweredQuestion(id) {
+    const q = questionMap.get(id);
+    if (!q) return;
+    const level = questionHistory.levels[q.difficulty];
+    // Eine erneut beantwortete Frage wird zur neuesten im Verlauf.
+    questionHistory.levels[q.difficulty] = [...level.filter((oldId) => oldId !== id), id]
+      .slice(-HISTORY_MAX_PER_LEVEL);
+    try { localStorage.setItem(HISTORY_KEY, JSON.stringify(questionHistory)); }
+    catch (error) { /* Bei gesperrtem Speicher funktioniert die Auswahl innerhalb der Sitzung. */ }
+  }
+
+  function chooseQuestions(round, selectedCategory) {
+    const pool = questions.filter((q) => q.difficulty === round.difficulty &&
+      (selectedCategory === ALL_CATEGORIES || q.category === selectedCategory));
+    const poolIds = new Set(pool.map((q) => q.id));
+    const history = questionHistory.levels[round.difficulty]
+      .filter((id) => poolIds.has(id));
+    // Sperre nur so viele Fragen, dass mindestens fünf auswählbar bleiben.
+    const limit = Math.min(selectedCategory === ALL_CATEGORIES ? MIXED_COOLDOWN : CATEGORY_COOLDOWN,
+      Math.max(0, pool.length - QUESTIONS_PER_ROUND));
+    const locked = new Set(history.slice(-limit));
+    const available = pool.filter((q) => !locked.has(q.id));
+    // Fallback bei geänderten/kleinen Katalogen: zuerst die am längsten nicht
+    // gestellten Fragen zulassen, statt die Runde unspielbar zu machen.
+    if (available.length < QUESTIONS_PER_ROUND) {
+      const ranking = new Map(history.map((id, index) => [id, index]));
+      return shuffle(pool).sort((a, b) =>
+        (ranking.has(a.id) ? ranking.get(a.id) : -1) -
+        (ranking.has(b.id) ? ranking.get(b.id) : -1))
+        .slice(0, QUESTIONS_PER_ROUND).map((q) => q.id);
+    }
+    return shuffle(available).slice(0, QUESTIONS_PER_ROUND).map((q) => q.id);
   }
 
   function validateCatalog() {
@@ -227,7 +291,7 @@
             </button>`).join("")}
         </div>
         <div class="start-actions">
-          <span class="start-note">Fragen werden f&uuml;r jede Runde neu gemischt.<br>Der Spielstand bleibt in diesem Browser gespeichert.</span>
+          <span class="start-note">Antworten werden gemischt; zuletzt beantwortete Fragen bleiben f&uuml;r mehrere Spiele gesperrt.<br>Spielstand und Fragenverlauf bleiben in diesem Browser gespeichert.</span>
           <button class="button button--primary" type="button" data-action="start">Quiz starten <span class="button-arrow" aria-hidden="true">&rarr;</span></button>
         </div>
       </section>
@@ -235,11 +299,7 @@
   }
 
   function startNewGame() {
-    const questionIds = ROUNDS.flatMap((round) => {
-      const pool = questions.filter((q) => q.difficulty === round.difficulty &&
-        (selectedCategory === ALL_CATEGORIES || q.category === selectedCategory));
-      return shuffle(pool).slice(0, QUESTIONS_PER_ROUND).map((q) => q.id);
-    });
+    const questionIds = ROUNDS.flatMap((round) => chooseQuestions(round, selectedCategory));
     if (questionIds.length !== TOTAL_QUESTIONS) {
       app.innerHTML = "<p>F&uuml;r die gew&auml;hlte Kategorie sind nicht gen&uuml;gend Fragen vorhanden.</p>";
       return;
@@ -480,6 +540,7 @@
       elapsedMs: Math.round(game.questionElapsedMs),
       usedJoker: game.joker.used && game.joker.questionId === q.id
     });
+    rememberAnsweredQuestion(q.id);
     game.questionElapsedMs = 0;
     if (!correct) game.mistakes += 1;
 
@@ -566,6 +627,35 @@
   });
 
   resetButton.addEventListener("click", restartGame);
+
+  // PWA: optionaler Installationsknopf, sobald der Browser Installation anbietet.
+  const installButton = document.getElementById("install-button");
+  let installPrompt = null;
+  window.addEventListener("beforeinstallprompt", (event) => {
+    event.preventDefault();
+    installPrompt = event;
+    if (installButton) installButton.hidden = false;
+  });
+  installButton?.addEventListener("click", async () => {
+    if (!installPrompt) return;
+    const prompt = installPrompt;
+    installPrompt = null;
+    installButton.hidden = true;
+    await prompt.prompt();
+  });
+  window.addEventListener("appinstalled", () => {
+    installPrompt = null;
+    if (installButton) installButton.hidden = true;
+  });
+
+  // Service Worker nur bei HTTPS bzw. localhost (nicht bei file://).
+  if ("serviceWorker" in navigator && (location.protocol === "https:" ||
+      ["localhost", "127.0.0.1"].includes(location.hostname))) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("./service-worker.js")
+        .catch((error) => console.warn("Offline-Modus nicht verfügbar:", error));
+    });
+  }
 
   document.addEventListener("keydown", (event) => {
     if (event.altKey || event.ctrlKey || event.metaKey || event.repeat || !game) return;

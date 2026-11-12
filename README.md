@@ -1,64 +1,34 @@
-# QUIZLAB - Browser-Quiz
+# Quizlab – Delta v2
 
-Ein mobilfreundliches HTML-Quiz im Dark Mode mit blauer Akzentfarbe.
-Keine Installation, kein Framework, kein Backend und keine Internetverbindung erforderlich.
+Dieses Update ergänzt eine Wiederholungssperre und macht Quizlab als Progressive Web App (PWA) installierbar.
 
-## Starten
+## Installation des Deltas
 
-1. Die ZIP-Datei entpacken.
-2. Alle vier Dateien im selben Ordner lassen.
-3. `index.html` in einem Browser aufrufen.
+1. Den Inhalt von `delta.v2.zip` in den vorhandenen Quizlab-Ordner entpacken.
+2. Vorhandene `app.js` und `index.html` überschreiben; neue Dateien und den Ordner `icons` übernehmen.
+3. Die bestehende `questions.js` mit 750 Fragen unverändert beibehalten. Auch `styles.css` bleibt unverändert.
+4. Die App über **HTTPS** bereitstellen (alternativ für lokale Tests `http://localhost:8000`).
+5. Beim ersten Online-Aufruf werden die benötigten Dateien für spätere Offline-Nutzung zwischengespeichert.
 
-Sollte der Browser `localStorage` bei lokal geöffneten HTML-Dateien blockieren,
-kann das Spiel auch über einen kleinen lokalen Webserver gestartet werden:
+`file://` (direktes Doppelklicken auf `index.html`) erlaubt keine Service Worker und bietet daher keine vollständige PWA-Installation/Offline-Verwaltung. Das Quiz selbst kann weiterhin lokal geöffnet werden.
 
-```bash
-cd quizspiel
-python3 -m http.server 8000
-```
+## Wiederholungssperre
 
-Anschließend im Browser `http://localhost:8000` aufrufen.
+- Beantwortete Fragen werden in einem **separaten localStorage-Verlauf** gespeichert und über neue Spiele hinweg berücksichtigt.
+- Bei einer einzelnen Kategorie bleiben die **35 zuletzt beantworteten Fragen derselben Kategorie und Schwierigkeitsstufe** für die nächste Auswahl gesperrt.
+- Bei `Alle Kategorien` bleiben die **100 zuletzt beantworteten Fragen pro Schwierigkeitsstufe** für die nächste Auswahl gesperrt.
+- Jede Runde verwendet weiterhin fünf verschiedene Fragen aus der gewählten Stufe.
+- Bei einem verkleinerten Katalog oder unzureichend vielen Kandidaten wird auf die am längsten nicht beantworteten Fragen zurückgegriffen, damit das Quiz spielbar bleibt.
+- Die Reihenfolge der vier Antwortmöglichkeiten bleibt zufällig. Bestehende Spielstände bleiben kompatibel.
+- Der Verlauf wird nur für **tatsächlich beantwortete Fragen** fortgeschrieben, nicht für vorgemerkte Fragen eines abgebrochenen Spiels.
+- Der Verlauf bleibt beim Starten eines neuen Spiels erhalten, kann jedoch durch Löschen der Websitedaten im Browser zurückgesetzt werden.
 
-## Enthaltene Dateien
+## PWA
 
-- `index.html` - HTML-Grundstruktur
-- `styles.css` - Layout, Dark Mode und mobile Darstellung
-- `questions.js` - 75 Fragen in 5 Kategorien mit 3 Schwierigkeitsgraden
-- `app.js` - Spielablauf, Joker, Zeitmessung, Statistik und localStorage
+- `manifest.webmanifest`: Installationsmetadaten, Start-URL, Theme und App-Symbole.
+- `icons/icon-192.png`, `icons/icon-512.png`: Icons für Home-Screen und App-Launcher.
+- `service-worker.js`: Cache der App-Dateien (inklusive der vorhandenen `questions.js`); Offline-Fallback.
+- Aktualisierte Dateien werden bei vorhandener Netzwerkverbindung erneut vom Server bezogen.
+- Sofern der Browser `beforeinstallprompt` unterstützt, erscheint die Schaltfläche **App installieren**. Auf iOS erfolgt die Installation über **Teilen → Zum Home-Bildschirm**.
 
-## Regeln
-
-- 3 Runden mit jeweils 5 Fragen: leicht, mittel, schwer.
-- Jede Frage besitzt genau 4 Antwortmöglichkeiten.
-- Ein 50:50-Joker ist pro Spiel einmal verwendbar. Er entfernt zwei falsche Antworten.
-- Beim dritten Fehler endet das Spiel sofort.
-- Nach jeder Antwort (ausser am Spielende) wird eine kurze Erklärung angezeigt.
-- Zwischen den Runden gibt es eine Pause mit eigenem Startknopf.
-- In der Schlussauswertung: aktive Spielzeit, Fehler, richtige Antworten,
-  am längsten bearbeitete Frage und Ort des Jokereinsatzes.
-- Das laufende Spiel wird in localStorage gespeichert und bei erneutem Oeffnen fortgesetzt.
-  Auch das Ergebnis bleibt bis zum Start eines neuen Spiels erhalten.
-
-## Fragen anpassen
-
-In `questions.js` befindet sich das Array `QUESTION_ROWS`. Jede Zeile folgt dem Schema:
-
-```js
-[id, kategorie, schwierigkeit, frage, [antwortA, antwortB, antwortC, antwortD], richtigerIndex, erklaerung]
-```
-
-- `schwierigkeit`: `easy`, `medium` oder `hard`
-- `richtigerIndex`: 0 = A, 1 = B, 2 = C, 3 = D
-- Jede Frage braucht eine eindeutige und möglichst unveränderliche `id`.
-- Eine neue auswählbare Kategorie benötigt mindestens fünf Fragen pro Schwierigkeitsgrad.
-- Fragen werden beim Spielstart innerhalb des Schwierigkeitsgrads gemischt.
-
-## Bedienung
-
-- Mit Mausklick oder Touch spielen.
-- Die Zifferntasten `1` bis `4` wählen die Antworten A bis D.
-- Taste `J` aktiviert den Joker, solange er noch nicht benutzt wurde.
-- Ein neues Spiel kann jederzeit oben rechts gestartet werden.
-
-**Datenschutz:** Das Spiel speichert den Spielstand ausschließlich im `localStorage`
-des verwendeten Browsers. Es sendet keine Daten an einen Server.
+Die App speichert Fragenverlauf und Spielstand nur lokal im Browser; es ist kein Backend nötig.
