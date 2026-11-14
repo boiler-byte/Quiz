@@ -1,0 +1,577 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#080f1c">
+  <meta name="color-scheme" content="dark">
+  <title>Fragenverwaltung · Quizlab</title>
+  <style>
+    :root {color-scheme:dark;--bg:#080f1c;--panel:#111d30;--panel2:#17263b;--edge:#2b3b52;--text:#ecf3ff;--muted:#a1b2ca;--accent:#76d5f2;--blue:#4286ed;--green:#71dfb0;--warn:#f4be73;--red:#fb9195;--shadow:0 16px 45px #0004}
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{margin:0;background:radial-gradient(circle at 2% -8%,#16406a6b,transparent 34rem),radial-gradient(circle at 95% 4%,#164e5063,transparent 36rem),var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;line-height:1.5;min-height:100vh}
+    button,input,textarea,select{font:inherit}
+    button{cursor:pointer}
+    button:disabled{opacity:.45;cursor:not-allowed}
+    a{color:var(--accent)}
+    :focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+    .wrap{width:min(1250px,calc(100% - 40px));margin-inline:auto}
+    header{border-bottom:1px solid #ffffff15;background:#0a1424c9;backdrop-filter:blur(14px)}
+    .head{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:24px 0}
+    .brand{display:flex;align-items:center;gap:14px;text-decoration:none;color:inherit}
+    .logo{display:grid;place-items:center;width:47px;height:47px;border-radius:13px;background:linear-gradient(140deg,#338cc8,#4e56aa);font-weight:850;font-size:24px;letter-spacing:-2px}
+    .logo span{color:#9bfae1}
+    .brand-title{font-size:19px;font-weight:800;letter-spacing:.04em}
+    .brand-title span{color:var(--accent)}
+    .brand-subtitle{display:block;color:var(--muted);font-size:11px;font-weight:700;letter-spacing:.17em}
+    .back{color:var(--muted);text-decoration:none;border:1px solid var(--edge);padding:9px 14px;border-radius:11px;white-space:nowrap}
+    .back:hover{color:var(--text);border-color:#7493b6}
+    .intro{display:flex;justify-content:space-between;align-items:end;gap:20px;padding:32px 0 23px}
+    h1{margin:0 0 7px;font-size:clamp(26px,3.7vw,40px);letter-spacing:-.045em;line-height:1.12}
+    .intro p{margin:0;color:var(--muted);max-width:740px}
+    .count-grid{display:flex;gap:9px;flex-wrap:wrap;margin:12px 0 24px}
+    .stat{background:#15243a9e;border:1px solid var(--edge);border-radius:12px;padding:11px 18px;min-width:136px}
+    .stat strong{display:block;font-size:21px;line-height:1.2}
+    .stat span{color:var(--muted);font-size:12px}
+    .toolbar{background:#101c2f;border:1px solid var(--edge);border-radius:18px;padding:18px;box-shadow:var(--shadow)}
+    .filter-grid{display:grid;grid-template-columns:minmax(240px,2fr) minmax(160px,1fr) minmax(160px,1fr);gap:13px}
+    label.input-group{display:flex;flex-direction:column;gap:5px;color:var(--muted);font-weight:700;font-size:12px}
+    input[type="search"],input[type="text"],textarea,select{width:100%;min-width:0;background:#0a1526;border:1px solid #3a4d65;border-radius:10px;padding:10px 12px;color:var(--text);outline:none;transition:border-color .15s,background .15s}
+    input:focus,select:focus,textarea:focus{border-color:var(--accent);background:#101e32}
+    input::placeholder,textarea::placeholder{color:#7689a2}
+    textarea{resize:vertical;min-height:53px}
+    .tool-bottom{display:flex;gap:10px;justify-content:space-between;align-items:center;flex-wrap:wrap;margin-top:15px}
+    .checks,.actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+    .check{display:inline-flex;align-items:center;gap:7px;color:var(--muted);font-size:13px;cursor:pointer;user-select:none}
+    .check input{accent-color:#63ceea;width:16px;height:16px}
+    .button{border:1px solid #405570;border-radius:11px;padding:10px 14px;background:#192b43;color:var(--text);font-weight:730;font-size:13px;white-space:nowrap}
+    .button:hover{background:#253c56}
+    .button-primary{color:#071422;background:var(--accent);border-color:var(--accent)}
+    .button-primary:hover{background:#b2ecfa}
+    .button-quiet{border-color:transparent;background:transparent;color:var(--muted)}
+    .button-quiet:hover{background:#1b2c43;color:var(--text)}
+    .button-danger{color:var(--red);border-color:#7a404c;background:#391e2a}
+    .button-danger:hover{background:#572831}
+    .hint{margin:12px 1px 0;color:var(--muted);font-size:12px}
+    .inline-code{padding:1px 5px;background:#0005;border:1px solid #ffffff16;border-radius:5px;color:#d4e8fb}
+    .banner{margin-top:16px;padding:14px 17px;border:1px solid #668ca4;border-radius:13px;background:#17314a;color:#d8f1ff;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+    .banner[hidden]{display:none}
+    .banner.warning{border-color:#816644;background:#34271d;color:#ffe3b9}
+    .banner strong{font-size:14px}
+    .banner p{font-size:13px;margin:4px 0 0}
+    .bar{display:flex;justify-content:space-between;gap:14px;align-items:center;flex-wrap:wrap;margin:25px 1px 13px}
+    .bar-title{font-size:15px;color:var(--muted)}
+    .bar-title strong{color:var(--text)}
+    .page-controls{display:flex;gap:9px;align-items:center;color:var(--muted);font-size:13px}
+    .page-controls select{width:auto;padding:7px 10px}
+    .page-controls button{padding:7px 12px}
+    #question-list{display:grid;gap:15px;padding-bottom:15px}
+    .question-card{background:linear-gradient(145deg,#122139,#111c2d);border:1px solid #31445d;border-radius:17px;padding:20px 22px;box-shadow:0 8px 32px #0002;scroll-margin-top:16px}
+    .question-card.is-edited{border-left:4px solid var(--accent);padding-left:19px}
+    .question-card.has-warning{border-right:4px solid #b98750;padding-right:19px}
+    .question-top{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap;margin-bottom:15px}
+    .question-tags{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+    .number{font-weight:800;color:#d6e4f6;font-size:14px}
+    .tag{font-size:11px;font-weight:750;background:#243853;border:1px solid #425777;padding:3px 8px;border-radius:999px;color:#c7ddf6}
+    .tag-edit{background:#133e48;border-color:#386f7e;color:#a0f0e7}
+    .tag-warn{background:#49331d;border-color:#775130;color:#ffd09c}
+    .meta{font-size:11px;color:var(--muted);font-family:ui-monospace,SFMono-Regular,Consolas,monospace}
+    .card-actions{display:flex;gap:3px}
+    .card-actions button{padding:5px 8px;border:none;background:transparent;color:var(--muted);font-size:12px}
+    .card-actions button:hover{color:var(--text);background:#263a51;border-radius:6px}
+    .card-actions button.delete:hover{color:var(--red)}
+    .form-grid{display:grid;grid-template-columns:minmax(0,2fr) minmax(150px,1fr) minmax(130px,.7fr);gap:14px;margin-bottom:13px}
+    .wide-field{grid-column:1/-1}
+    .editor-label{display:flex;flex-direction:column;gap:6px;color:var(--muted);font-size:12px;font-weight:720}
+    .editor-label textarea{font-size:15px;color:var(--text)}
+    .answers-label{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:4px 0 9px;font-size:12px;font-weight:750;color:var(--muted)}
+    .answers-label small{font-weight:400;font-size:12px}
+    .answers-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+    .option-row{display:flex;align-items:center;gap:10px;background:#0a1728;border:1px solid #32435a;border-radius:11px;padding:8px 11px}
+    .option-row.is-correct{border-color:#48a584;background:#0d302e}
+    .correct-picker{display:flex;align-items:center;gap:8px;color:#b8c7dc;cursor:pointer;flex:0 0 auto}
+    .correct-picker input{accent-color:var(--green);width:16px;height:16px;cursor:pointer;margin:0}
+    .letter{font-size:13px;font-weight:800;width:15px}
+    .option-row input[type="text"]{background:transparent;border:0;border-radius:0;padding:5px 0;color:var(--text);font-size:14px}
+    .option-row input[type="text"]:focus{background:transparent;border:0;outline:0}
+    .option-row:focus-within{outline:2px solid #4bb7d3;outline-offset:1px}
+    .explain{margin-top:13px}
+    .issue-line{margin:10px 0 0;color:var(--warn);font-size:12px}
+    .empty{padding:55px 18px;border:1px dashed #4b6280;border-radius:15px;text-align:center;color:var(--muted);margin-bottom:20px}
+    .empty[hidden]{display:none}
+    .bottom-nav{display:flex;align-items:center;justify-content:center;gap:14px;margin:8px 0 44px;color:var(--muted);font-size:13px}
+    #toast{position:fixed;z-index:10;right:20px;bottom:20px;max-width:min(440px,calc(100vw - 40px));background:#18364a;border:1px solid #58adc4;border-radius:13px;padding:14px 17px;color:#e3f7ff;box-shadow:var(--shadow);font-size:13px}
+    #toast[hidden]{display:none}
+    footer{border-top:1px solid #ffffff15;padding:18px 0 28px;color:var(--muted);font-size:12px}
+    @media(max-width:750px){.wrap{width:min(100% - 24px,1250px)}.head{padding:15px 0}.intro{padding:26px 0 18px}.filter-grid{grid-template-columns:1fr 1fr}.filter-grid>label:first-child{grid-column:1/-1}.question-card{padding:15px}.question-card.is-edited{padding-left:12px}.question-card.has-warning{padding-right:12px}.form-grid{grid-template-columns:1fr 1fr}.form-grid>label:first-child{grid-column:1/-1}.answers-grid{grid-template-columns:1fr}.back{font-size:12px}.tool-bottom{align-items:stretch}.actions{width:100%}}
+    @media(max-width:450px){.filter-grid,.form-grid{grid-template-columns:1fr}.filter-grid>label:first-child,.form-grid>label:first-child{grid-column:auto}.button{padding:9px 11px}.card-actions{width:100%;justify-content:flex-end}.stat{flex:1;min-width:110px}.brand-subtitle{letter-spacing:.04em}.logo{width:40px;height:40px}.bottom-nav{gap:8px}}
+  </style>
+  <script src="questions.js"></script>
+</head>
+<body>
+  <header>
+    <div class="wrap head">
+      <a class="brand" href="index.html" aria-label="Quizlab – zurück zum Spiel">
+        <span class="logo" aria-hidden="true">Q<span>.</span></span>
+        <span><span class="brand-title">QUIZ<span>LAB</span></span><span class="brand-subtitle">FRAGENVERWALTUNG</span></span>
+      </a>
+      <a class="back" href="index.html">← Zum Quiz</a>
+    </div>
+  </header>
+  <main class="wrap">
+    <div class="intro"><div><h1>Fragen bearbeiten</h1><p>Überarbeite Fragen, vier Antwortmöglichkeiten und die richtige Lösung direkt im Browser. Die Fragen-IDs bleiben erhalten, damit bestehende Spielstände funktionieren.</p></div></div>
+    <div class="count-grid" aria-live="polite">
+      <div class="stat"><strong id="stat-total">–</strong><span>Fragen insgesamt</span></div>
+      <div class="stat"><strong id="stat-visible">–</strong><span>Im aktuellen Filter</span></div>
+      <div class="stat"><strong id="stat-edited">0</strong><span>Änderungen</span></div>
+      <div class="stat"><strong id="stat-flagged">–</strong><span>Auffällige Antworten*</span></div>
+    </div>
+    <section class="toolbar" aria-label="Filter und Speichern">
+      <div class="filter-grid">
+        <label class="input-group">Suche in Fragen, Antworten und Erklärungen
+          <input type="search" id="search" placeholder="Suchbegriff, Frage oder ID …" autocomplete="off">
+        </label>
+        <label class="input-group">Kategorie
+          <select id="filter-category"><option value="">Alle Kategorien</option></select>
+        </label>
+        <label class="input-group">Schwierigkeit
+          <select id="filter-difficulty"><option value="">Alle Stufen</option><option value="easy">Leicht</option><option value="medium">Mittel</option><option value="hard">Schwer</option></select>
+        </label>
+      </div>
+      <div class="tool-bottom">
+        <div class="checks">
+          <label class="check"><input type="checkbox" id="filter-edited"> Nur geänderte</label>
+          <label class="check"><input type="checkbox" id="filter-flagged"> Nur auffällige*</label>
+        </div>
+        <div class="actions">
+          <button type="button" class="button" id="button-open">Datei öffnen / importieren</button>
+          <button type="button" class="button" id="button-add">+ Neue Frage</button>
+          <button type="button" class="button button-primary" id="button-save">questions.js speichern</button>
+          <button type="button" class="button" id="button-json">JSON speichern</button>
+        </div>
+      </div>
+      <p class="hint">* Hinweise auf doppelte oder unterschiedlich formatierte Antwortmöglichkeiten. Das ist nur ein technischer Plausibilitätscheck, keine inhaltliche KI-Prüfung. Beim Speichern als Download die neue <span class="inline-code">questions.js</span> im Quiz-Ordner ersetzen. JSON ist ein Zusatzexport; das Spiel nutzt <span class="inline-code">questions.js</span>.</p>
+      <input type="file" id="fallback-open" accept=".json,.js,application/json,text/javascript" hidden>
+    </section>
+    <div id="draft-banner" class="banner" hidden>
+      <div><strong>Ein früherer Bearbeitungsstand ist vorhanden.</strong><p id="draft-description">Du kannst deine noch nicht gespeicherten Änderungen wiederherstellen.</p></div>
+      <div class="actions"><button type="button" class="button button-primary" id="button-restore">Wiederherstellen</button><button type="button" class="button" id="button-discard">Verwerfen</button></div>
+    </div>
+    <div id="warning-banner" class="banner warning" hidden>
+      <div><strong id="warning-title">Prüfhinweise</strong><p id="warning-message"></p></div>
+      <button type="button" class="button" id="button-close-warning">Schließen</button>
+    </div>
+    <div class="bar">
+      <div class="bar-title" id="result-description">Fragen werden geladen …</div>
+      <div class="page-controls">
+        <label for="page-size">Pro Seite</label><select id="page-size"><option value="20">20</option><option value="50">50</option><option value="100">100</option><option value="750">Alle</option></select>
+        <button type="button" id="prev" class="button" aria-label="Vorherige Seite">←</button>
+        <span id="page-info">–</span>
+        <button type="button" id="next" class="button" aria-label="Nächste Seite">→</button>
+      </div>
+    </div>
+    <div id="question-list"></div>
+    <div id="empty" class="empty" hidden>Keine passenden Fragen gefunden. Prüfe die Suchbegriffe und Filter.</div>
+    <nav class="bottom-nav" aria-label="Seitennavigation"><button id="bottom-prev" class="button" type="button">← Zurück</button><span id="bottom-page-info">–</span><button id="bottom-next" class="button" type="button">Weiter →</button></nav>
+  </main>
+  <footer><div class="wrap">Quizlab · Frageneditor · Änderungen werden bis zum Export zusätzlich als lokaler Browser-Entwurf gesichert.</div></footer>
+  <div id="toast" role="status" aria-live="polite" hidden></div>
+  <script>
+  (() => {
+    "use strict";
+    const $ = (id) => document.getElementById(id);
+    const DIFFICULTIES = {easy: "Leicht", medium: "Mittel", hard: "Schwer"};
+    const DRAFT_KEY = "quizlab-questions-editor-draft-v1";
+    const clone = (value) => JSON.parse(JSON.stringify(value));
+    const original = Array.isArray(window.QUIZ_QUESTIONS) ? clone(window.QUIZ_QUESTIONS) : [];
+    let questions = clone(original);
+    let baseline = clone(original);
+    let baselineMap = new Map(baseline.map((q) => [q.id, JSON.stringify(q)]));
+    let sourceSignature = signature(baseline);
+    let draft = null, dirtyIds = new Set(), visibleIds = [];
+    let jsHandle = null, jsonHandle = null;
+    let currentPage = 1, pageSize = 20, draftTimer = null, toastTimer = null;
+
+    function signature(data) {
+      const str = JSON.stringify(data);
+      let hash = 2166136261;
+      for (let i = 0; i < str.length; i++) { hash ^= str.charCodeAt(i); hash = Math.imul(hash, 16777619); }
+      return str.length + ":" + (hash >>> 0).toString(16);
+    }
+    function escapeHtml(value) {
+      return String(value ?? "").replace(/[&<>"']/g, (c) => ({'&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'}[c]));
+    }
+    function toast(message) {
+      const el = $("toast"); el.textContent = message; el.hidden = false;
+      clearTimeout(toastTimer); toastTimer = setTimeout(() => { el.hidden = true; }, 6000);
+    }
+    function showWarning(title, message) {
+      $("warning-title").textContent = title;
+      $("warning-message").textContent = message;
+      $("warning-banner").hidden = false;
+      $("warning-banner").scrollIntoView({behavior:"smooth", block:"nearest"});
+    }
+    function changesFor(q) { return baselineMap.get(q.id) !== JSON.stringify(q); }
+    function refreshDirty() {
+      dirtyIds = new Set(questions.filter(changesFor).map((q) => q.id));
+      for (const q of baseline) if (!questions.some((x) => x.id === q.id)) dirtyIds.add(q.id);
+    }
+    function flagsFor(q) {
+      const warnings = [];
+      const a = q.answers.map((v) => String(v || "").trim());
+      if (a.some((v) => !v)) warnings.push("Eine Antwort ist leer.");
+      const filled = a.filter(Boolean);
+      if (new Set(filled.map((v) => v.toLocaleLowerCase("de"))).size !== filled.length) warnings.push("Identische Antwortmöglichkeiten.");
+      const numeric = (v) => /^[+-]?\d+(?:[.,]\d+)?(?:\s*%)?$/.test(v);
+      if (filled.some(numeric) && filled.some((v) => !numeric(v))) warnings.push("Zahlen und Text sind gemischt – passt das zur Frage?");
+      return warnings;
+    }
+    function updateCategorySelect() {
+      const select = $("filter-category"), previous = select.value;
+      const cats = [...new Set(questions.map((q) => q.category.trim()).filter(Boolean))].sort((a,b) => a.localeCompare(b,"de"));
+      select.replaceChildren(new Option("Alle Kategorien", ""), ...cats.map((c) => new Option(c,c)));
+      if (cats.includes(previous)) select.value = previous;
+    }
+    function filtered() {
+      const term = $("search").value.trim().toLocaleLowerCase("de");
+      const cat = $("filter-category").value;
+      const diff = $("filter-difficulty").value;
+      const edited = $("filter-edited").checked;
+      const flagged = $("filter-flagged").checked;
+      return questions.filter((q) => (!cat || q.category === cat) && (!diff || q.difficulty === diff)
+        && (!edited || dirtyIds.has(q.id)) && (!flagged || flagsFor(q).length)
+        && (!term || [q.id,q.category,q.difficulty,q.question,q.explanation,...q.answers]
+          .some((text) => String(text || "").toLocaleLowerCase("de").includes(term))));
+    }
+    function render() {
+      refreshDirty();
+      const list = filtered();
+      visibleIds = list.map((q) => q.id);
+      const totalPages = Math.max(1, Math.ceil(list.length / pageSize));
+      currentPage = Math.min(Math.max(currentPage,1),totalPages);
+      const from = (currentPage - 1) * pageSize;
+      const displayed = list.slice(from, from + pageSize);
+      $("question-list").innerHTML = displayed.map((q, i) => questionHtml(q, from+i+1)).join("");
+      $("empty").hidden = list.length !== 0;
+      $("stat-total").textContent = questions.length.toLocaleString("de");
+      $("stat-visible").textContent = list.length.toLocaleString("de");
+      $("stat-edited").textContent = dirtyIds.size.toLocaleString("de");
+      $("stat-flagged").textContent = questions.filter((q) => flagsFor(q).length).length.toLocaleString("de");
+      $("result-description").innerHTML = `<strong>${list.length.toLocaleString("de")}</strong> Fragen gefunden${list.length ? ` · Anzeige ${from+1}–${Math.min(from+pageSize,list.length)}` : ""}`;
+      $("page-info").textContent = `${currentPage} / ${totalPages}`;
+      $("bottom-page-info").textContent = `Seite ${currentPage} von ${totalPages}`;
+      for (const id of ["prev","bottom-prev"]) $(id).disabled = currentPage === 1;
+      for (const id of ["next","bottom-next"]) $(id).disabled = currentPage >= totalPages;
+    }
+    function questionHtml(q, displayNumber) {
+      const warnings = flagsFor(q);
+      const changed = dirtyIds.has(q.id);
+      const encodedId = encodeURIComponent(q.id);
+      return `<article class="question-card ${changed ? "is-edited" : ""} ${warnings.length ? "has-warning" : ""}" data-id="${escapeHtml(q.id)}">
+        <div class="question-top">
+          <div class="question-tags"><span class="number">#${displayNumber}</span><span class="tag">${escapeHtml(DIFFICULTIES[q.difficulty] || q.difficulty)}</span><span class="meta">ID: ${escapeHtml(q.id)}</span>${changed ? '<span class="tag tag-edit">Geändert</span>' : ""}${warnings.length ? '<span class="tag tag-warn">Prüfen</span>' : ""}</div>
+          <div class="card-actions"><button type="button" data-action="clone" title="Frage kopieren">Duplizieren</button><button type="button" data-action="delete" class="delete" title="Frage löschen">Löschen</button></div>
+        </div>
+        <div class="form-grid">
+          <label class="editor-label wide-field">Frage<textarea rows="2" data-field="question" spellcheck="true">${escapeHtml(q.question)}</textarea></label>
+          <label class="editor-label">Kategorie<input type="text" data-field="category" list="category-suggestions" value="${escapeHtml(q.category)}"></label>
+          <label class="editor-label">Schwierigkeit<select data-field="difficulty">${Object.entries(DIFFICULTIES).map(([key,name]) => `<option value="${key}" ${q.difficulty === key ? "selected" : ""}>${name}</option>`).join("")}</select></label>
+          <div class="editor-label"><span>Fragen-ID (fest)</span><input type="text" value="${escapeHtml(q.id)}" readonly title="Die ID bleibt für vorhandene Spielstände unverändert" aria-label="Feste Fragen-ID"></div>
+        </div>
+        <div class="answers-label"><span>Antwortmöglichkeiten</span><small>Links die richtige Antwort markieren (●)</small></div>
+        <div class="answers-grid">${q.answers.map((a,i) => `<div class="option-row ${q.correctIndex === i ? "is-correct" : ""}">
+          <label class="correct-picker" title="Antwort ${String.fromCharCode(65+i)} als richtig markieren"><input type="radio" data-field="correctIndex" name="correct-${encodedId}" value="${i}" ${q.correctIndex === i ? "checked" : ""} aria-label="Antwort ${String.fromCharCode(65+i)} ist richtig"><span class="letter">${String.fromCharCode(65+i)}</span></label>
+          <input type="text" data-field="answer" data-answer-index="${i}" aria-label="Antwort ${String.fromCharCode(65+i)}" value="${escapeHtml(a)}" spellcheck="true">
+        </div>`).join("")}</div>
+        <label class="editor-label explain">Erklärung / Auflösung<textarea rows="2" data-field="explanation">${escapeHtml(q.explanation || "")}</textarea></label>
+        ${warnings.length ? `<p class="issue-line">⚠ ${escapeHtml(warnings.join(" "))}</p>` : ""}
+      </article>`;
+    }
+    function scheduleDraft() {
+      clearTimeout(draftTimer);
+      draftTimer = setTimeout(() => {
+        try {
+          refreshDirty();
+          if (dirtyIds.size) localStorage.setItem(DRAFT_KEY, JSON.stringify({base:sourceSignature, questions}));
+          else localStorage.removeItem(DRAFT_KEY);
+        } catch (error) { toast("Browser-Entwurf konnte nicht gespeichert werden. Bitte Datei exportieren."); }
+      }, 500);
+    }
+    function changedCard(card) {
+      const q = questions.find((x) => x.id === card.dataset.id);
+      if (!q) return;
+      refreshDirty();
+      card.classList.toggle("is-edited",dirtyIds.has(q.id));
+      card.classList.toggle("has-warning",flagsFor(q).length > 0);
+      const tags = card.querySelector(".question-tags");
+      tags.querySelector(".tag-edit")?.remove(); tags.querySelector(".tag-warn")?.remove();
+      if (dirtyIds.has(q.id)) tags.insertAdjacentHTML("beforeend",'<span class="tag tag-edit">Geändert</span>');
+      const warn = flagsFor(q);
+      if (warn.length) tags.insertAdjacentHTML("beforeend",'<span class="tag tag-warn">Prüfen</span>');
+      card.querySelector(".issue-line")?.remove();
+      if (warn.length) card.insertAdjacentHTML("beforeend",`<p class="issue-line">⚠ ${escapeHtml(warn.join(" "))}</p>`);
+      $("stat-edited").textContent = dirtyIds.size.toLocaleString("de");
+      $("stat-flagged").textContent = questions.filter((x) => flagsFor(x).length).length.toLocaleString("de");
+      scheduleDraft();
+    }
+    function freshId() {
+      let n = 1, id;
+      do { id = "neu-" + String(n++).padStart(4,"0"); } while(questions.some((q) => q.id === id));
+      return id;
+    }
+    function addAndFocus(q) {
+      questions.push(q);
+      $("search").value = "";
+      $("filter-edited").checked = false; $("filter-flagged").checked = false;
+      $("filter-category").value = ""; $("filter-difficulty").value = "";
+      updateCategorySelect();
+      currentPage = Math.ceil(questions.length / pageSize);
+      render(); scheduleDraft();
+      const card = [...document.querySelectorAll(".question-card")].find((el) => el.dataset.id === q.id);
+      if (card) { card.scrollIntoView({behavior:"smooth",block:"center"}); card.querySelector('[data-field="question"]')?.focus({preventScroll:true}); }
+      toast("Frage hinzugefügt. Bitte Frage und vier Antworten ausfüllen.");
+    }
+    function validateCatalog() {
+      const errors = [], seen = new Set(), counts = new Map();
+      for (const q of questions) {
+        const tag = q.id || "(ohne ID)";
+        if (!q.id || seen.has(q.id)) errors.push(`Doppelte oder leere ID: ${tag}`);
+        seen.add(q.id);
+        if (!q.category.trim()) errors.push(`${tag}: Kategorie fehlt.`);
+        if (!Object.hasOwn(DIFFICULTIES,q.difficulty)) errors.push(`${tag}: Unbekannte Schwierigkeit.`);
+        if (!q.question.trim()) errors.push(`${tag}: Frage fehlt.`);
+        if (!Array.isArray(q.answers) || q.answers.length !== 4 || q.answers.some((s) => !String(s).trim())) errors.push(`${tag}: Vier ausgefüllte Antworten erforderlich.`);
+        if (!Number.isInteger(q.correctIndex) || q.correctIndex < 0 || q.correctIndex > 3) errors.push(`${tag}: Korrekte Antwort auswählen.`);
+        if (q.answers.length === 4 && new Set(q.answers.map((s) => s.trim().toLocaleLowerCase("de"))).size < 4) errors.push(`${tag}: Doppelte Antwortmöglichkeiten.`);
+        const key = `${q.category}\u0000${q.difficulty}`;
+        counts.set(key,(counts.get(key)||0)+1);
+      }
+      for (const level of Object.keys(DIFFICULTIES)) if (questions.filter((q) => q.difficulty === level).length < 5) errors.push(`In ${DIFFICULTIES[level]} sind insgesamt weniger als fünf Fragen.`);
+      for (const category of new Set(questions.map((q) => q.category))) {
+        for (const level of Object.keys(DIFFICULTIES)) {
+          const n = counts.get(`${category}\u0000${level}`)||0;
+          if (n < 5) errors.push(`Kategorie „${category}“: mindestens fünf Fragen in ${DIFFICULTIES[level]} erforderlich (aktuell ${n}).`);
+        }
+      }
+      return errors;
+    }
+    function rowsToQuestions(rows) {
+      if (!Array.isArray(rows)) throw Error("Keine Fragenliste gefunden.");
+      return rows.map((row,i) => {
+        const q = Array.isArray(row) ? {
+          id: row[0],category: row[1],difficulty: row[2],question:row[3],answers:row[4],correctIndex:row[5],explanation:row[6] || ""
+        } : row;
+        if (!q || typeof q !== "object" || typeof q.id !== "string" || typeof q.category !== "string"
+          || typeof q.difficulty !== "string" || typeof q.question !== "string"
+          || !Array.isArray(q.answers) || q.answers.length !== 4 || q.answers.some((a) => typeof a !== "string")
+          || !Number.isInteger(q.correctIndex) || typeof (q.explanation ?? "") !== "string") {
+          throw Error(`Ungültiger Datensatz bei Frage ${i+1}.`);
+        }
+        return {id:q.id,category:q.category,difficulty:q.difficulty,question:q.question,answers:[...q.answers],correctIndex:q.correctIndex,explanation:q.explanation ?? ""};
+      });
+    }
+    function stripCommentsAndTrailingCommas(src) {
+      let out = "", quote = null, escape = false, line = false, block = false;
+      for (let i = 0; i < src.length; i++) {
+        const c = src[i], n = src[i+1];
+        if (line) { if (c === "\n") {line=false;out+=c;} continue; }
+        if (block) { if (c === "*" && n === "/") {block=false;i++;} continue; }
+        if (quote) {out+=c; if (escape) escape=false; else if (c === "\\") escape=true; else if (c === quote) quote=null; continue;}
+        if (c === '"' || c === "'") {quote=c;out+=c;continue;}
+        if (c === "/" && n === "/") {line=true;i++;continue;}
+        if (c === "/" && n === "*") {block=true;i++;continue;}
+        if (c === ",") {
+          let j=i+1;
+          while (/\s/.test(src[j] || "") && j<src.length) j++;
+          if (src[j] === "]" || src[j] === "}") continue;
+        }
+        out+=c;
+      }
+      return out;
+    }
+    function extractJsArray(src) {
+      const match = /\b(?:const|let|var)\s+QUESTION_ROWS\s*=\s*\[/.exec(src);
+      if (!match) throw Error("Die JS-Datei enthält keine QUESTION_ROWS. Erwartet wird die originale questions.js.");
+      const start = match.index + match[0].length - 1;
+      let quote = null, escape=false, line=false,block=false,depth=0;
+      for (let i=start; i<src.length; i++) {
+        const c=src[i],n=src[i+1];
+        if (line) {if (c==='\n') line=false;continue;}
+        if (block) {if(c==='*'&&n==='/'){i++;block=false;}continue;}
+        if (quote) {if(escape)escape=false;else if(c==='\\')escape=true;else if(c===quote)quote=null;continue;}
+        if(c==='"'||c==="'"){quote=c;continue;}
+        if(c==='/'&&n==='/'){line=true;i++;continue;}
+        if(c==='/'&&n==='*'){block=true;i++;continue;}
+        if(c==='[')depth++;
+        if(c===']'&&--depth===0)return src.slice(start,i+1);
+      }
+      throw Error("QUESTION_ROWS konnte nicht vollständig gelesen werden.");
+    }
+    function parseData(text, filename) {
+      let data;
+      if (/\.js$/i.test(filename)) data = JSON.parse(stripCommentsAndTrailingCommas(extractJsArray(text)));
+      else {
+        data = JSON.parse(text);
+        if (data && !Array.isArray(data)) data = data.questions || data.rows;
+      }
+      return rowsToQuestions(data);
+    }
+    function jsContent() {
+      const rows = questions.map((q) => [q.id,q.category,q.difficulty,q.question,q.answers,q.correctIndex,q.explanation]);
+      return `/* Quizlab-Fragenkatalog · Bearbeitet mit fragen.html
+ * Format: [id, kategorie, schwierigkeit, frage, [vier Antworten], richtigeAntwort(0-3), erklärung]
+ * Die IDs nach Möglichkeit nicht ändern: Sie werden für Spielstände benötigt.
+ */\nconst QUESTION_ROWS = [\n${rows.map((r) => "  " + JSON.stringify(r)).join(",\n")}\n];\n\nwindow.QUIZ_QUESTIONS = QUESTION_ROWS.map(\n  ([id, category, difficulty, question, answers, correctIndex, explanation]) => ({\n    id, category, difficulty, question, answers, correctIndex, explanation\n  })\n);\n`;
+    }
+    function jsonContent() { return JSON.stringify({format:"quizlab-questions-v1", questions},null,2) + "\n"; }
+    function downloadText(text, filename, mime) {
+      const blob = new Blob([text],{type:mime});
+      const href = URL.createObjectURL(blob);
+      const a=document.createElement("a");a.href=href;a.download=filename;document.body.append(a);a.click();a.remove();
+      setTimeout(() => URL.revokeObjectURL(href),10000);
+    }
+    async function writeHandle(handle, text) {
+      const writable = await handle.createWritable();
+      await writable.write(text); await writable.close();
+    }
+    async function saveFile(kind) {
+      const errors = validateCatalog();
+      if (errors.length) {
+        showWarning(`${errors.length} Problem(e) verhindern das Speichern`, errors.slice(0,7).join(" · ") + (errors.length>7 ? ` · … und ${errors.length-7} weitere.` : ""));
+        toast("Bitte zuerst die angezeigten Fehler beheben.");
+        return;
+      }
+      const isJs = kind === "js", filename = isJs ? "questions.js" : "questions.json";
+      const text = isJs ? jsContent() : jsonContent();
+      const mime = isJs ? "text/javascript;charset=utf-8" : "application/json;charset=utf-8";
+      let handle = isJs ? jsHandle : jsonHandle;
+      try {
+        if (!handle && "showSaveFilePicker" in window) {
+          handle = await window.showSaveFilePicker({suggestedName:filename,types:[{description:isJs?"JavaScript-Fragenkatalog":"JSON-Fragenkatalog",accept:{[mime.split(";")[0]]:[isJs?".js":".json"]}}]});
+        }
+        if (handle) {
+          await writeHandle(handle,text);
+          if (isJs) jsHandle=handle; else jsonHandle=handle;
+          if (isJs) {
+            baseline=clone(questions);baselineMap=new Map(baseline.map((q) => [q.id,JSON.stringify(q)]));sourceSignature=signature(baseline);
+            refreshDirty();clearTimeout(draftTimer);try{localStorage.removeItem(DRAFT_KEY);}catch(e){}
+            $("draft-banner").hidden=true;render();
+          }
+          toast(`${filename} gespeichert. ${isJs ? "Das Quiz kann diese Datei verwenden." : "Für das Spiel außerdem questions.js speichern."}`);
+        } else {
+          downloadText(text,filename,mime);
+          toast(`${filename} heruntergeladen. ${isJs ? "Ersetze damit die questions.js im Quiz-Ordner." : "Die JSON-Datei ist ein Zusatzexport."}`);
+        }
+      } catch(e) {
+        if (e?.name === "AbortError") return;
+        showWarning("Speichern fehlgeschlagen",e.message || String(e));
+      }
+    }
+    function loadQuestions(imported, filename, handle) {
+      if (!imported.length) throw Error("Die Datei enthält keine Fragen.");
+      if (dirtyIds.size && !confirm("Deine aktuellen Änderungen durch den importierten Fragenkatalog ersetzen?")) return;
+      questions = clone(imported); baseline = clone(imported);
+      baselineMap=new Map(baseline.map((q) => [q.id,JSON.stringify(q)]));sourceSignature=signature(baseline);
+      if (/\.js$/i.test(filename)) {jsHandle=handle||null;jsonHandle=null;}
+      else {jsonHandle=handle||null;jsHandle=null;}
+      $("search").value="";$("filter-edited").checked=false;$("filter-flagged").checked=false;
+      $("filter-difficulty").value="";$("filter-category").value="";
+      updateCategorySelect();currentPage=1;render();
+      clearTimeout(draftTimer);try{localStorage.removeItem(DRAFT_KEY);}catch(e){}
+      $("draft-banner").hidden=true;
+      $("warning-banner").hidden=true;
+      toast(`${questions.length} Fragen aus ${filename} geladen.`);
+    }
+    async function openFile() {
+      if ("showOpenFilePicker" in window) {
+        try {
+          const [handle] = await window.showOpenFilePicker({multiple:false,types:[{description:"Quizlab Fragen (.js oder .json)",accept:{"application/json":[".json"],"text/javascript":[".js"]}}]});
+          const file = await handle.getFile();
+          const imported = parseData(await file.text(),file.name);
+          loadQuestions(imported,file.name,handle);
+        } catch(e) {if (e?.name!=="AbortError") showWarning("Import fehlgeschlagen",e.message||String(e));}
+      } else $("fallback-open").click();
+    }
+    function findDraft() {
+      try {
+        const value=JSON.parse(localStorage.getItem(DRAFT_KEY) || "null");
+        if (value && Array.isArray(value.questions) && value.questions.length) {
+          draft = value;
+          $("draft-banner").hidden=false;
+          $("draft-description").textContent = value.base === sourceSignature
+            ? "Du hast in diesem Browser noch nicht exportierte Änderungen. Sie können wiederhergestellt werden."
+            : "Die Datei questions.js wurde seit dem Entwurf verändert oder gehört zu einem anderen Katalog. Prüfe den Entwurf nach dem Wiederherstellen.";
+        }
+      } catch(e) {try{localStorage.removeItem(DRAFT_KEY);}catch(_){} }
+    }
+    function changePage(delta) { currentPage+=delta; render(); document.querySelector(".bar")?.scrollIntoView({behavior:"smooth",block:"start"}); }
+
+    $("question-list").addEventListener("input",(event) => {
+      const el=event.target, field=el.dataset.field;
+      if (!field || field === "correctIndex") return;
+      const card=el.closest(".question-card"), q=questions.find((x) => x.id === card?.dataset.id);
+      if (!q) return;
+      if (field === "answer") q.answers[Number(el.dataset.answerIndex)] = el.value;
+      else q[field]=el.value;
+      changedCard(card);
+    });
+    $("question-list").addEventListener("change",(event) => {
+      const el=event.target, card=el.closest(".question-card"), q=questions.find((x) => x.id === card?.dataset.id);
+      if (!q) return;
+      if (el.dataset.field === "correctIndex") {
+        q.correctIndex=Number(el.value);
+        card.querySelectorAll(".option-row").forEach((row,i) => row.classList.toggle("is-correct",i===q.correctIndex));
+        changedCard(card);
+      } else if (el.dataset.field === "category") {
+        updateCategorySelect();
+      }
+    });
+    $("question-list").addEventListener("click",(event) => {
+      const btn=event.target.closest("button[data-action]");if(!btn)return;
+      const card=btn.closest(".question-card"), q=questions.find((x) => x.id === card?.dataset.id);
+      if(!q)return;
+      if (btn.dataset.action === "clone") addAndFocus({...clone(q),id:freshId()});
+      else if (btn.dataset.action === "delete" && confirm(`Frage „${q.id}“ wirklich löschen?`)) {
+        questions=questions.filter((x)=>x.id!==q.id);updateCategorySelect();render();scheduleDraft();toast("Frage gelöscht.");
+      }
+    });
+    let filterTimer;
+    $("search").addEventListener("input",() => {clearTimeout(filterTimer);filterTimer=setTimeout(()=>{currentPage=1;render();},180);});
+    for(const id of ["filter-category","filter-difficulty","filter-edited","filter-flagged"])
+      $(id).addEventListener("change",()=>{currentPage=1;render();});
+    $("page-size").addEventListener("change",(e)=>{pageSize=Number(e.target.value);currentPage=1;render();});
+    for(const id of ["prev","bottom-prev"])$(id).addEventListener("click",()=>changePage(-1));
+    for(const id of ["next","bottom-next"])$(id).addEventListener("click",()=>changePage(1));
+    $("button-add").addEventListener("click",()=>addAndFocus({id:freshId(),category:$("filter-category").value||questions[0]?.category||"Allgemeinwissen",difficulty:$("filter-difficulty").value||"easy",question:"",answers:["","","",""],correctIndex:0,explanation:""}));
+    $("button-open").addEventListener("click",openFile);
+    $("fallback-open").addEventListener("change",async(e)=>{
+      const file=e.target.files?.[0];if(!file)return;
+      try {loadQuestions(parseData(await file.text(),file.name),file.name,null);}catch(error){showWarning("Import fehlgeschlagen",error.message||String(error));}
+      e.target.value="";
+    });
+    $("button-save").addEventListener("click",()=>saveFile("js"));
+    $("button-json").addEventListener("click",()=>saveFile("json"));
+    $("button-restore").addEventListener("click",()=>{
+      try {
+        const recovered=rowsToQuestions(draft.questions);
+        if (draft.base!==sourceSignature && !confirm("Der Entwurf stammt von einem anderen Stand des Fragenkatalogs. Trotzdem wiederherstellen?"))return;
+        questions=recovered;updateCategorySelect();currentPage=1;render();scheduleDraft();$("draft-banner").hidden=true;toast("Dein Entwurf wurde wiederhergestellt.");
+      } catch(e) {showWarning("Entwurf nicht lesbar",e.message||String(e));}
+    });
+    $("button-discard").addEventListener("click",()=>{try{localStorage.removeItem(DRAFT_KEY);}catch(e){}draft=null;$("draft-banner").hidden=true;toast("Alter Entwurf verworfen.");});
+    $("button-close-warning").addEventListener("click",()=>{$("warning-banner").hidden=true;});
+    window.addEventListener("beforeunload",(event)=>{refreshDirty();if(dirtyIds.size){event.preventDefault();event.returnValue="";}});
+    if (!questions.length) showWarning("Katalog nicht gefunden","questions.js konnte nicht geladen werden. Verwende „Datei öffnen / importieren“ und wähle deine questions.js oder questions.json aus.");
+    updateCategorySelect();render();findDraft();
+    // Datalist for category suggestions is generated dynamically.
+    const suggestions=document.createElement("datalist");suggestions.id="category-suggestions";
+    document.body.append(suggestions);
+    const refreshSuggestions=()=>{suggestions.replaceChildren(...[...new Set(questions.map((q)=>q.category).filter(Boolean))].map((v)=>new Option(v,v)));};
+    refreshSuggestions();
+    $("question-list").addEventListener("change",(e)=>{if(e.target.dataset.field==="category")refreshSuggestions();});
+  })();
+  </script>
+  <noscript><p class="wrap">Bitte aktiviere JavaScript, um Fragen zu bearbeiten.</p></noscript>
+</body>
+</html>
